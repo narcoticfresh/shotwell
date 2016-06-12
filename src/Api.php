@@ -34,6 +34,13 @@ class Api
     );
 
     /**
+     * database
+     *
+     * @var \PDO
+     */
+    private $db;
+
+    /**
      * Local cache array
      *
      * @var array
@@ -53,7 +60,7 @@ class Api
             throw new \Exception("Database with path '" . $dbPath ."' doesn't exist or isn't readable!");
         }
 
-        $this->_conn = new \PDO('sqlite:' . $dbPath);
+        $this->db = new \PDO('sqlite:' . $dbPath);
     }
 
     /**
@@ -222,7 +229,7 @@ class Api
         if ($thisTagId !== false) {
             $q = "UPDATE TagTable SET `photo_id_list` = ? WHERE id = ?";
 
-            $res = $this->_conn->prepare($q);
+            $res = $this->db->prepare($q);
 
             $saveString = implode(',', $items).',';
 
@@ -276,7 +283,7 @@ class Api
 
         $q = "UPDATE `" . $thisTable . "` SET rating=? WHERE id=?";
 
-        $res = $this->_conn->prepare($q);
+        $res = $this->db->prepare($q);
         $ret = $res->execute(array(
             $rating,
             $item['id']
@@ -322,7 +329,7 @@ class Api
             $params = [];
         }
 
-        $res = $this->_conn->prepare($query);
+        $res = $this->db->prepare($query);
         $res->execute($params);
 
         $ret = array();
@@ -385,7 +392,7 @@ class Api
     public function getAllTags($withItems = false)
     {
         $q = 'SELECT * FROM TagTable';
-        $res = $this->_conn->prepare($q);
+        $res = $this->db->prepare($q);
         $res->execute();
         $ret = [];
 
@@ -460,7 +467,7 @@ class Api
     public function getTag($tagName, $autoCreate = false, $withItems = false)
     {
         $q = 'SELECT * FROM TagTable WHERE name=?';
-        $res = $this->_conn->prepare($q);
+        $res = $this->db->prepare($q);
         $res->execute(array(
                 $tagName
         ));
@@ -520,7 +527,7 @@ class Api
                     (`name`, `photo_id_list`, `time_created`)
                     VALUES (?, ?, ?)
                     ";
-            $res = $this->_conn->prepare($insQ);
+            $res = $this->db->prepare($insQ);
             $res->execute([$tagName, '', time()]);
             $ret = true;
         }
@@ -558,7 +565,7 @@ class Api
             SELECT id, 'photo' FROM PhotoTable
             WHERE `" . $field . "` LIKE ?";
 
-            $res = $this->_conn->prepare($q);
+            $res = $this->db->prepare($q);
             $res->execute(['%' . $value . '%', '%' . $value . '%']);
         } else {
             $q = "
@@ -566,7 +573,7 @@ class Api
             UNION ALL
             SELECT id, 'photo' FROM PhotoTable";
 
-            $res = $this->_conn->prepare($q);
+            $res = $this->db->prepare($q);
             $res->execute([]);
         }
 

@@ -1,0 +1,8 @@
+checks:
+    php:
+        code_rating: true
+        duplication: true
+before_commands:
+    - 'composer install --dev'
+tools:
+    external_code_coverage: true
