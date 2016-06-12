@@ -13,5 +13,5 @@ install:
 
 script:
   - composer check
-  - ./vendor/bin/phpunit --coverage-clover=coverage.clover
+  - phpunit --coverage-clover=coverage.clover
   - php ocular.phar code-coverage:upload --format=php-clover coverage.clover
