@@ -1,6 +1,7 @@
 # shotwell - a PHP library for Shotwell databases
 
-[![PHP version](https://badge.fury.io/ph/narcoticfresh%2Fshotwell.svg)](https://badge.fury.io/ph/narcoticfresh%2Fshotwell)
+
+[![PHP version](https://badge.fury.io/ph/narcoticfresh%2Fshotwell.svg)](https://badge.fury.io/ph/narcoticfresh%2Fshotwell) [![Build Status](https://travis-ci.org/narcoticfresh/shotwell.svg?branch=master)](https://travis-ci.org/narcoticfresh/shotwell) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/narcoticfresh/shotwell/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/narcoticfresh/shotwell/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/narcoticfresh/shotwell/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/narcoticfresh/shotwell/?branch=master)
 
 This is a simple PHP library for dealing with Shotwell (the default photo manager in Ubuntu) sqlite databases.
 
@@ -72,3 +73,4 @@ $shotwell->setItemTags('my-object-id', ['tag1', 'tag2']);
 $shotwell->setItemRating('my-object-id', 3);
 ```
 
+There are more functions, just check the class file..
