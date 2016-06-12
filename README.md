@@ -48,7 +48,7 @@ composer require narcoticfresh/shotwell
 // make sure composer autoloader is there
 require_once 'vendor/autoload.php';
 
-$shotwell = new \Narcoticfresh\Shotwell\Api('/home/dn/.local/share/shotwell/data/photo.db');
+$shotwell = new \Narcoticfresh\Shotwell\Api('/home/user/.local/share/shotwell/data/photo.db');
 
 // get everything
 $items = $shotwell->getAll();
