@@ -16,36 +16,36 @@ class Api
     /**
      * Constant for photo type
      */
-    const TYPE_PHOTO = "PHOTO";
+    const string TYPE_PHOTO = "PHOTO";
 
     /**
      * Constant for video type
      */
-    const TYPE_VIDEO = "VIDEO";
+    const string TYPE_VIDEO = "VIDEO";
 
     /**
      * Type map, mapping the ObjectID prefixes to our constants
      *
      * @var array
      */
-    private $typeMap = array(
+    private array $typeMap = [
         self::TYPE_PHOTO => 'thumb',
         self::TYPE_VIDEO => 'video-'
-    );
+    ];
 
     /**
      * database
      *
      * @var \PDO
      */
-    private $db;
+    private \PDO $db;
 
     /**
      * Local cache array
      *
      * @var array
      */
-    private $tagMap = null;
+    private ?array $tagMap = null;
 
     /**
      * Api constructor.
@@ -599,10 +599,10 @@ class Api
      *
      * @return array
      */
-    public function getItemTagMap()
+    public function getItemTagMap() : array
     {
         $tagData = $this->getAllTags();
-        $ret = array();
+        $ret = [];
 
         foreach ($tagData as $tag) {
             $thisItems = explode(",", $tag['photo_id_list']);
