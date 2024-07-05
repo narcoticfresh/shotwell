@@ -24,6 +24,16 @@ class Api
   const string TYPE_VIDEO = "VIDEO";
 
   /**
+   * LIKE search
+   */
+  const string SEARCHMODE_LIKE = "LIKE";
+
+  /**
+   * EQ search
+   */
+  const string SEARCHMODE_EQ = "EQ";
+
+  /**
    * Type map, mapping the ObjectID prefixes to our constants
    *
    * @var array
@@ -57,7 +67,7 @@ class Api
   public function __construct($dbPath)
   {
     if (!file_exists($dbPath) || !is_readable($dbPath)) {
-      throw new \Exception("Database with path '" . $dbPath ."' doesn't exist or isn't readable!");
+      throw new \Exception("Database with path '" . $dbPath . "' doesn't exist or isn't readable!");
     }
 
     $this->db = new \PDO('sqlite:' . $dbPath);
@@ -68,7 +78,7 @@ class Api
    *
    * @return \PDO
    */
-  public function getDb() : \PDO
+  public function getDb(): \PDO
   {
     return $this->db;
   }
@@ -135,7 +145,7 @@ class Api
    *
    * @return bool Either an array of tags or false if the object doesn't exist
    */
-  public function getTagsByObjectId($objectId)
+  public function getTagsByObjectId($objectId) : ?array
   {
     if (is_null($this->tagMap)) {
       $this->tagMap = $this->getItemTagMap();
@@ -144,7 +154,7 @@ class Api
     if (isset($this->tagMap[$objectId])) {
       $ret = $this->tagMap[$objectId];
     } else {
-      return false;
+      return null;
     }
 
     return $ret;
@@ -155,11 +165,11 @@ class Api
    * calling getObjectIdByNumericId(). This sets the tags to the ones you pass.
    *
    * @param string $objectId Object ID
-   * @param array  $tags     An array of strings containing your tags
+   * @param array $tags An array of strings containing your tags
    *
    * @return bool true if all is good, false otherwise
    */
-  public function setItemTags($objectId, array $tags)
+  public function setItemTags($objectId, array $tags) : bool
   {
     $currentTags = $this->getTagsByObjectId($objectId);
 
@@ -189,15 +199,15 @@ class Api
   /**
    * This is a private function for doing common stuff on the tag. So not from item perspective.
    *
-   * @param string $tagName  the tag
+   * @param string $tagName the tag
    * @param string $whatToDo What you want to do (either 'add' or 'remove')
    * @param string $objectId Object ID
    *
+   * @return boolean true if all seems ok, false otherwise
    * @throws Exception
    *
-   * @return boolean true if all seems ok, false otherwise
    */
-  private function manipulateItemOnTag($tagName, $whatToDo, $objectId)
+  private function manipulateItemOnTag($tagName, $whatToDo, $objectId) : bool
   {
     $thisTagData = $this->getTag($tagName, true);
     $ret = false;
@@ -226,12 +236,12 @@ class Api
   /**
    * Sets items on a tag
    *
-   * @param string $tag   the tag
-   * @param array  $items items
+   * @param string $tag the tag
+   * @param array $items items
    *
    * @return bool true if all ok, false otherwise
    */
-  private function setTagItems($tag, array $items)
+  private function setTagItems($tag, array $items) : bool
   {
     $thisTagId = $this->getTagId($tag);
     $ret = false;
@@ -241,7 +251,7 @@ class Api
 
       $res = $this->db->prepare($q);
 
-      $saveString = implode(',', $items).',';
+      $saveString = implode(',', $items) . ',';
 
       // ensure we don't save ",," somewhere..
       $saveString = str_replace(',,', ',', $saveString);
@@ -262,12 +272,12 @@ class Api
    * calling getObjectIdByNumericId().
    *
    * @param string $objectId Object ID
-   * @param int    $rating   Rating (1-5)
+   * @param int $rating Rating (1-5)
    *
    * @return bool true if all ok, false otherwise
    * @throws \Exception
    */
-  public function setItemRating($objectId, $rating)
+  public function setItemRating($objectId, $rating) : bool
   {
     if (!is_numeric($rating)) {
       throw new \Exception(sprintf("Rating must be numeric, '%s' given", $rating));
@@ -310,7 +320,7 @@ class Api
    *
    * @return void
    */
-  public function removeAllItemTags($objectId)
+  public function removeAllItemTags($objectId) : bool
   {
     return $this->setItemTags($objectId, []);
   }
@@ -318,12 +328,12 @@ class Api
   /**
    * Gets an item
    *
-   * @param string      $itemType What type of item
+   * @param string $itemType What type of item
    * @param null|string $objectId The object ID
    *
    * @return array the item
    */
-  private function getItem($itemType, $objectId = null)
+  private function getItem($itemType, $objectId = null) : array
   {
     if ($itemType == self::TYPE_PHOTO) {
       $tableName = 'PhotoTable';
@@ -342,7 +352,7 @@ class Api
     $res = $this->db->prepare($query);
     $res->execute($params);
 
-    $ret = array();
+    $ret = [];
 
     while (($data = $res->fetch(\PDO::FETCH_ASSOC))) {
       if (is_array($data) && isset($data['id'])) {
@@ -470,7 +480,7 @@ class Api
    *
    * @param string $tagName tag name
    * @param bool $autoCreate shall it be auto created if it doesn't exist?
-   * @param bool $withItems  shall items be attached to it ('items' element)
+   * @param bool $withItems shall items be attached to it ('items' element)
    *
    * @return array|mixed|null tag
    */
@@ -527,7 +537,7 @@ class Api
    *
    * @return bool true if all good, false otherwise
    */
-  public function createTag($tagName) : bool
+  public function createTag($tagName): bool
   {
     $ret = false;
 
@@ -552,7 +562,7 @@ class Api
    *
    * @return array matching items
    */
-  public function getItemsByPath($path) : array
+  public function getItemsByPath($path): array
   {
     return $this->searchAllWithCondition('filename', $path);
   }
@@ -565,18 +575,32 @@ class Api
    *
    * @return array matching items
    */
-  public function searchAllWithCondition($field = null, $value = null) : array
+  public function searchAllWithCondition(?string $field = null, mixed $value = null, string $searchMode = self::SEARCHMODE_LIKE): array
   {
     if ($field != null && $field != null) {
-      $q = "
+
+      $fieldCondition = $searchMode == self::SEARCHMODE_LIKE ? "LIKE ?" : "= ?";
+      $fieldExpr = $searchMode == self::SEARCHMODE_LIKE ? '%' . $value . '%' : $value;
+
+      $q = sprintf(
+        "
             SELECT id, 'video' as type FROM VideoTable
-            WHERE `" . $field . "`  LIKE ?
+            WHERE `%s` %s
             UNION ALL
             SELECT id, 'photo' FROM PhotoTable
-            WHERE `" . $field . "` LIKE ?";
+            WHERE `%s` %s",
+        $field,
+        $fieldCondition,
+        $field,
+        $fieldCondition
+      );
 
       $res = $this->db->prepare($q);
-      $res->execute(['%' . $value . '%', '%' . $value . '%']);
+      $res->execute(
+        [
+          $fieldExpr, $fieldExpr
+        ]
+      );
     } else {
       $q = "
             SELECT id, 'video' as type FROM VideoTable
@@ -609,7 +633,7 @@ class Api
    *
    * @return array
    */
-  public function getItemTagMap() : array
+  public function getItemTagMap(): array
   {
     $tagData = $this->getAllTags();
     $ret = [];
@@ -649,7 +673,7 @@ class Api
   /**
    * Returns the Object ID with a type and a numeric ID
    *
-   * @param string $type      Either photo or video, use the class constants
+   * @param string $type Either photo or video, use the class constants
    * @param string $numericId Numeric ID
    *
    * @return string Object ID
